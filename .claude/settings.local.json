@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "WebFetch(domain:github.com)",
-      "WebFetch(domain:tanstack.com)"
+      "WebFetch(domain:tanstack.com)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

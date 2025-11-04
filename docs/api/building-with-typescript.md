@@ -138,6 +138,27 @@ export interface Item {
   BaseSell: number;
 }
 
+// Extended interface with visual data
+export interface ItemWithVisuals extends Item {
+  iconUrl: string;          // URL to item icon image
+  modelId?: number;         // 3D model ID for equipment
+  description?: string;     // Item description text
+}
+
+// Helper to add icon URLs to items using FFXIAH CDN
+export function enrichItemWithVisuals(item: Item): ItemWithVisuals {
+  return {
+    ...item,
+    // FFXIAH hosts all item icons at a predictable URL
+    iconUrl: `https://static.ffxiah.com/images/icon/${item.itemid}.png`
+  };
+}
+
+// Get icon URL for any item ID
+export function getItemIconUrl(itemId: number): string {
+  return `https://static.ffxiah.com/images/icon/${itemId}.png`;
+}
+
 export interface ItemEquipment extends Item {
   jobs: number;
   level: number;
@@ -792,6 +813,206 @@ export const adminFunction = createServerFn({ method: 'POST' })
     // req.user is available here
     // Check if user.isAdmin, etc.
   });
+```
+
+## Working with Visual Assets (Icons, Models)
+
+### Item Icons
+
+**Important**: LandSandBoat's database does NOT store item icons or visual assets.
+
+**Recommended Solution: Use FFXIAH CDN** ✨
+
+FFXIAH hosts all FFXI item icons on their CDN with a simple, predictable URL pattern:
+
+```
+https://static.ffxiah.com/images/icon/{itemId}.png
+```
+
+**Examples**:
+- Duskdim Stone +1 (ID 8955): https://static.ffxiah.com/images/icon/8955.png
+- Pils Tuille (ID 3490): https://static.ffxiah.com/images/icon/3490.png
+
+```typescript
+// lib/icons.ts
+export function getItemIconUrl(itemId: number): string {
+  return `https://static.ffxiah.com/images/icon/${itemId}.png`;
+}
+
+// With fallback to default icon
+export function getItemIconUrlSafe(itemId: number): string {
+  // FFXIAH has icons for all items, but you can add fallback logic
+  return `https://static.ffxiah.com/images/icon/${itemId}.png`;
+}
+```
+
+**Alternative Options** (if you need local hosting):
+
+**Option 1: Cache FFXIAH Icons Locally**
+```typescript
+// Download and cache icons from FFXIAH
+async function cacheIcon(itemId: number) {
+  const url = `https://static.ffxiah.com/images/icon/${itemId}.png`;
+  const response = await fetch(url);
+  const buffer = await response.arrayBuffer();
+  // Save to your local storage/CDN
+  await saveToLocal(`icons/${itemId}.png`, buffer);
+}
+```
+
+**Option 2: Extract from FFXI Client**
+```bash
+# Use tools to extract DAT files from FFXI client
+# Icons are stored in ROM/x/y.DAT files
+# Requires FFXI client installation and extraction tools
+# Only needed if you want complete control over assets
+```
+
+#### Usage in Components
+
+```typescript
+// app/components/ItemIcon.tsx
+interface ItemIconProps {
+  itemId: number;
+  name: string;
+  size?: 'sm' | 'md' | 'lg';
+}
+
+export function ItemIcon({ itemId, name, size = 'md' }: ItemIconProps) {
+  const sizes = {
+    sm: 24,
+    md: 32,
+    lg: 48
+  };
+
+  return (
+    <img
+      src={`https://static.ffxiah.com/images/icon/${itemId}.png`}
+      alt={name}
+      width={sizes[size]}
+      height={sizes[size]}
+      className="item-icon"
+      loading="lazy"
+      onError={(e) => {
+        // Fallback to a default icon if FFXIAH is down or icon doesn't exist
+        e.currentTarget.src = '/icons/default.png';
+      }}
+    />
+  );
+}
+
+// Usage
+<ItemIcon itemId={8955} name="Duskdim Stone +1" size="md" />
+```
+
+**With Image Optimization (Next.js/TanStack Start)**:
+
+```typescript
+// app/components/ItemIcon.tsx
+import Image from 'next/image'; // or your framework's Image component
+
+export function ItemIcon({ itemId, name, size = 'md' }: ItemIconProps) {
+  const sizes = {
+    sm: 24,
+    md: 32,
+    lg: 48
+  };
+
+  return (
+    <Image
+      src={`https://static.ffxiah.com/images/icon/${itemId}.png`}
+      alt={name}
+      width={sizes[size]}
+      height={sizes[size]}
+      className="item-icon"
+      unoptimized // FFXIAH images are already optimized
+    />
+  );
+}
+```
+
+### Character Models and Equipment Visuals
+
+```typescript
+// types/visuals.ts
+export interface EquipmentVisuals {
+  modelId: number;
+  race: number;
+  gender: number;
+  // Equipment appearance varies by race/gender
+}
+
+// lib/equipment-models.ts
+export function getEquipmentModel(
+  itemId: number,
+  race: number,
+  gender: number
+): EquipmentVisuals | null {
+  // You'll need to maintain this mapping or
+  // extract from FFXI client DAT files
+  return {
+    modelId: getModelId(itemId, race, gender),
+    race,
+    gender
+  };
+}
+```
+
+### Icon Data Sources
+
+**Primary Source:**
+- **FFXIAH CDN**: `https://static.ffxiah.com/images/icon/{itemId}.png` - Hosts all FFXI item icons
+
+**Other Community Resources:**
+- **FFXIAH.com**: Complete item database with additional data
+- **FFXIclopedia**: Wiki with item information
+- **GitHub**: FFXI data repositories
+
+**Legal Note**: Icon images are copyrighted by Square Enix. Using FFXIAH's hosted icons is commonly accepted for private server tools and fan projects, but be mindful when creating commercial services.
+
+### Example: Complete Item Display
+
+```typescript
+// app/components/ItemCard.tsx
+import { ItemIcon } from './ItemIcon';
+import { getItemMarketData } from '~/server-functions/items';
+import { useQuery } from '@tanstack/react-query';
+
+interface ItemCardProps {
+  item: ItemWithVisuals;
+}
+
+export function ItemCard({ item }: ItemCardProps) {
+  const { data: market } = useQuery({
+    queryKey: ['market', item.itemid],
+    queryFn: () => getItemMarketData(item.itemid)
+  });
+
+  return (
+    <div className="item-card">
+      <ItemIcon itemId={item.itemid} name={item.name} size="lg" />
+
+      <div className="item-info">
+        <h3>{item.name}</h3>
+
+        {item.description && (
+          <p className="description">{item.description}</p>
+        )}
+
+        <div className="item-meta">
+          <span>Stack: {item.stackSize}</span>
+          <span>NPC: {item.BaseSell.toLocaleString()} gil</span>
+        </div>
+
+        {market && (
+          <div className="market-info">
+            <span>AH: {market.lowest_price?.toLocaleString() || '—'} gil</span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 ```
 
 ## Summary
