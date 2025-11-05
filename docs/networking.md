@@ -263,51 +263,74 @@ world_http_api_port = 8088
 
 ### API Endpoints
 
-**Note**: Exact endpoints depend on server version. Common patterns:
+**Implementation**: `/src/world/http_server.cpp`
+**Data Cache**: Updates every 60 seconds
 
-#### GET /status
-Get server status
+#### GET /api
+Health check endpoint
+
+**Response**:
+```
+Hello LSB API
+```
+
+#### GET /api/sessions
+Get active session count
+
+**Response**:
+```json
+42
+```
+
+#### GET /api/ips
+Get unique IP count (distinct connections)
+
+**Response**:
+```json
+15
+```
+
+#### GET /api/zones
+Get player counts for all zones
 
 **Response**:
 ```json
 {
-    "online": true,
-    "players": 42,
-    "uptime": 3600,
-    "version": "1.0.0"
+    "230": 12,
+    "231": 8,
+    "235": 5
 }
 ```
 
-#### POST /announce
-Broadcast message to all players
+**Note**: Keys are zone IDs, values are player counts
 
-**Request**:
+#### GET /api/zones/:id
+Get player count for specific zone
+
+**Example**: `/api/zones/230`
+
+**Response**:
 ```json
-{
-    "message": "Server restart in 10 minutes"
-}
+12
 ```
+
+**Error**: Returns 404 if zone ID is invalid (> MAX_ZONEID)
+
+#### GET /api/settings
+Get server settings (filtered)
 
 **Response**:
 ```json
 {
-    "success": true,
-    "sent": 42
+    "main.EXP_RATE": 1.0,
+    "main.CURRENCY_RATE": 1.0,
+    "main.ALL_JOBS": false,
+    "main.UNLOCK_SUBJOB": false,
+    ...
 }
 ```
 
-#### GET /players
-Get online player list
-
-**Response**:
-```json
-{
-    "players": [
-        {"charid": 1, "name": "PlayerOne", "zone": 230},
-        {"charid": 2, "name": "PlayerTwo", "zone": 231}
-    ]
-}
-```
+**Note**: Excludes `network.*`, `logging.*`, and any key containing `password`
 
 ### HTTP API Client Example
 
@@ -317,15 +340,31 @@ import requests
 
 base_url = "http://localhost:8088"
 
-# Get server status
-response = requests.get(f"{base_url}/status")
-print(response.json())
+# Health check
+response = requests.get(f"{base_url}/api")
+print(response.text)  # "Hello LSB API"
 
-# Send announcement
-response = requests.post(f"{base_url}/announce", json={
-    "message": "Double EXP event now active!"
-})
-print(response.json())
+# Get active sessions
+response = requests.get(f"{base_url}/api/sessions")
+print(f"Active sessions: {response.json()}")
+
+# Get unique IPs
+response = requests.get(f"{base_url}/api/ips")
+print(f"Unique IPs: {response.json()}")
+
+# Get zone player counts
+response = requests.get(f"{base_url}/api/zones")
+zones = response.json()
+print(f"Zones: {zones}")
+
+# Get specific zone
+response = requests.get(f"{base_url}/api/zones/230")
+print(f"Players in zone 230: {response.json()}")
+
+# Get server settings
+response = requests.get(f"{base_url}/api/settings")
+settings = response.json()
+print(f"EXP Rate: {settings.get('main.EXP_RATE')}")
 ```
 
 **JavaScript (Node.js)**:
@@ -334,26 +373,46 @@ const axios = require('axios');
 
 const baseURL = 'http://localhost:8088';
 
-// Get server status
-axios.get(`${baseURL}/status`)
-    .then(response => console.log(response.data));
+async function queryAPI() {
+    // Health check
+    const health = await axios.get(`${baseURL}/api`);
+    console.log(health.data); // "Hello LSB API"
 
-// Send announcement
-axios.post(`${baseURL}/announce`, {
-    message: 'Double EXP event now active!'
-})
-    .then(response => console.log(response.data));
+    // Get active sessions
+    const sessions = await axios.get(`${baseURL}/api/sessions`);
+    console.log(`Active sessions: ${sessions.data}`);
+
+    // Get zone player counts
+    const zones = await axios.get(`${baseURL}/api/zones`);
+    console.log('Zone populations:', zones.data);
+
+    // Get server settings
+    const settings = await axios.get(`${baseURL}/api/settings`);
+    console.log('EXP Rate:', settings.data['main.EXP_RATE']);
+}
+
+queryAPI();
 ```
 
 **curl**:
 ```bash
-# Get status
-curl http://localhost:8088/status
+# Health check
+curl http://localhost:8088/api
 
-# Send announcement
-curl -X POST http://localhost:8088/announce \
-    -H "Content-Type: application/json" \
-    -d '{"message":"Server restart in 10 minutes"}'
+# Get active sessions
+curl http://localhost:8088/api/sessions
+
+# Get unique IPs
+curl http://localhost:8088/api/ips
+
+# Get all zone populations
+curl http://localhost:8088/api/zones
+
+# Get specific zone population
+curl http://localhost:8088/api/zones/230
+
+# Get server settings
+curl http://localhost:8088/api/settings
 ```
 
 ## Database Access
