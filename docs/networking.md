@@ -244,6 +244,33 @@ socket.recv(reply, zmq::recv_flags::none);
 
 ## HTTP API (World Server)
 
+### ⚠️ Recommendation for Tool Development
+
+**For most use cases, do NOT use this HTTP API. Instead:**
+
+✅ **Preferred Approach**: Connect directly to the MariaDB database
+- Full access to all game data (124 tables)
+- No 60-second cache delay
+- More flexible queries
+- Better performance
+- See [Database Documentation](database.md) for details
+
+✅ **Alternative**: Build your own RESTful API
+- Wrap the database with your own API server
+- Add authentication, rate limiting, custom endpoints
+- Use any tech stack (Node.js, Python, Go, etc.)
+- Complete control over functionality
+
+❌ **This HTTP API is limited to**:
+- Basic server monitoring (session counts, zone populations)
+- Read-only operations
+- No player/character management
+- No item management
+- No administrative actions
+- 60-second cache (stale data)
+
+**Use this HTTP API only for**: Simple monitoring dashboards or status displays where 60-second staleness is acceptable.
+
 ### Overview
 
 **Process**: Runs in the World Server (`xi_world` executable)
@@ -253,6 +280,7 @@ socket.recv(reply, zmq::recv_flags::none);
 **Format**: JSON
 **Implementation**: `/src/world/http_server.cpp` (cpp-httplib library)
 **Thread**: Runs on separate async thread (non-blocking)
+**Scope**: Limited monitoring endpoints only
 
 ### How It Works
 
@@ -690,11 +718,80 @@ Scripts can extend functionality without modifying C++ code:
 - Special events
 - Battle logic
 
+## Comparison: HTTP API vs Database Access
+
+### Why Direct Database Access is Better
+
+| Feature | LSB HTTP API | Direct Database Access |
+|---------|--------------|------------------------|
+| **Data Freshness** | 60-second cache | Real-time |
+| **Available Endpoints** | 6 basic endpoints | 124 tables, unlimited queries |
+| **Character Management** | ❌ Not available | ✅ Full CRUD operations |
+| **Item Management** | ❌ Not available | ✅ Full inventory access |
+| **Custom Queries** | ❌ Fixed endpoints | ✅ Any SQL query |
+| **Performance** | Cache-dependent | Direct, optimized |
+| **Authentication** | ❌ None | ✅ Database user permissions |
+| **Availability** | Requires World Server running | Always available |
+| **Setup Complexity** | Requires ENABLE_HTTP setting | Just connection string |
+
+### Example: Getting Character Information
+
+**❌ Using HTTP API** (not possible):
+```bash
+# HTTP API cannot get character info
+curl http://localhost:8088/api/characters/1
+# 404 - endpoint doesn't exist
+```
+
+**✅ Using Direct Database Access**:
+```python
+import mariadb
+
+conn = mariadb.connect(
+    host="127.0.0.1",
+    user="xiserver",
+    password="xiserver",
+    database="xidb"
+)
+
+# Get full character details
+cursor = conn.cursor()
+cursor.execute("""
+    SELECT c.*, cs.*, cj.*, cp.*
+    FROM chars c
+    JOIN char_stats cs ON c.charid = cs.charid
+    JOIN char_jobs cj ON c.charid = cj.charid
+    JOIN char_profile cp ON c.charid = cp.charid
+    WHERE c.charid = ?
+""", (1,))
+
+character = cursor.fetchone()
+# Full character data including stats, jobs, profile, etc.
+```
+
+### When to Use Each Approach
+
+**Use HTTP API when**:
+- Building a simple server status widget
+- Don't need real-time data (60s delay acceptable)
+- Only need session/zone population counts
+- Don't want to manage database credentials
+
+**Use Direct Database Access when**:
+- Building admin tools or GM panels
+- Managing characters, items, or inventory
+- Need real-time data
+- Building player-facing features (market, character lookup, etc.)
+- Creating custom reports or analytics
+- Modifying game data
+
+**Bottom line**: The HTTP API is useful for basic monitoring only. For any serious tool development, use direct database access.
+
 ## Building External Integrations
 
-### RESTful API Wrapper
+### RESTful API Wrapper (Recommended)
 
-Build a RESTful API around LandSandBoat's database:
+Build your own RESTful API around LandSandBoat's database:
 
 **Architecture**:
 ```
