@@ -23,14 +23,7 @@ This repository serves as an **AI-friendly knowledge base** for Final Fantasy XI
   networking.md                - Network protocols, IPC, HTTP API, packet structures (28 KB)
   scripting.md                 - Lua scripting guide, integration points, examples
 
-/research/                     - MMO API design research (108 KB)
-  api-comparison-matrix.md     - Side-by-side comparison of major MMO APIs
-  case-study-eve-online-esi.md - EVE Online ESI API analysis
-  case-study-guild-wars-2.md   - Guild Wars 2 API analysis
-  api-design-recommendations.md - Implementation guide for LandSandBoat API
-  mmo-api-design-overview.md   - Executive summary of API research
-
-/reference/                    - Full LandSandBoat codebase clone (772 MB)
+/reference/                    - Full LandSandBoat codebase clone (gitignored, set up via scripts/setup-reference.sh)
   src/                         - C++20 source code (common, map, world, login, search)
   scripts/                     - Lua scripting layer (zones, globals, enums)
   sql/                         - 126+ SQL schema files
@@ -103,7 +96,6 @@ When building integrations or tools:
 3. **IPC Integration**: ZeroMQ on port 54003 (localhost only), use IPC structures from `/reference/src/common/ipc.h`
 4. **Lua Scripting**: Place custom scripts in `/reference/scripts/` directory, use existing patterns from `/reference/scripts/globals/`
 5. **Module System**: Create modules in `/reference/modules/custom/` for extending functionality
-6. **API Design**: See `/research/api-design-recommendations.md` for modern API implementation guidance
 
 ### Working with Game Data
 
@@ -193,20 +185,16 @@ This repository uses a **flat-file documentation structure** under `/docs/` for 
 - `networking.md` - API, IPC, and networking protocols
 - `scripting.md` - Lua scripting guide
 
-### Research Directory
-The `/research/` directory contains MMO API design research:
-- Case studies from major MMOs (EVE Online, Guild Wars 2, WoW)
-- API comparison matrices
-- Implementation recommendations for LandSandBoat
-- 8-12 week roadmap for API development
-
 ### Reference Directory
-The `/reference/` directory contains the complete LandSandBoat codebase (772 MB):
-- Full C++20 source code
+The `/reference/` directory contains the complete LandSandBoat codebase and is **gitignored**:
+- Set up locally by running `./scripts/setup-reference.sh`
+- Contains full C++20 source code
 - All 297 zone scripts
 - Complete SQL schema
 - Python development tools
 - Configuration files and documentation
+
+This directory serves as a reference for AI agents to examine actual LandSandBoat code while working with the documentation.
 
 ### Contributing Guidelines
 
@@ -216,5 +204,4 @@ When adding or updating documentation:
 2. **Formatting**: Use clear markdown with code blocks and examples
 3. **Path References**: Reference files with line numbers (e.g., `/reference/src/map/zone.cpp:142`)
 4. **Focus**: Keep content focused on building tools and integrations
-5. **Research**: Add API/design research to `/research/`
-6. **Updates**: Update this CLAUDE.md when structure or major content changes occur
+5. **Updates**: Update this CLAUDE.md when structure or major content changes occur
