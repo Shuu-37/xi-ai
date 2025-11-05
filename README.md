@@ -33,7 +33,7 @@ The `/docs/` directory contains comprehensive AI-friendly documentation:
 
 ## Quick Start
 
-See **`CLAUDE.md`** for comprehensive guidance on working with this repository and the LandSandBoat codebase.
+Run `claude` in your terminal, and see **`CLAUDE.md`** for comprehensive guidance on working with this repository and the LandSandBoat codebase.
 
 ## Links
 
