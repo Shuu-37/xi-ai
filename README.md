@@ -6,19 +6,11 @@ An AI-friendly documentation repository for [LandSandBoat](https://github.com/La
 
 This repository provides structured documentation and reference materials to help AI agents (like Claude) understand and work with LandSandBoat's codebase. It's designed to support building tools, integrations, APIs, and utilities for FFXI private servers.
 
+The repository includes a `CLAUDE.md` file that provides comprehensive guidance for AI agents - no additional initialization needed.
+
 ## Setup
 
-### 1. Initialize Claude Code
-
-If you're using Claude Code, initialize the project:
-
-```bash
-claude code
-```
-
-Then run the `/init` command to set up your local Claude Code configuration.
-
-### 2. Set up LandSandBoat Reference
+### Set up LandSandBoat Reference
 
 To get the complete LandSandBoat reference codebase locally, run:
 
