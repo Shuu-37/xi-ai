@@ -12,6 +12,15 @@ This repository serves as an **AI-friendly knowledge base** for Final Fantasy XI
 - Interface with the server's various subsystems
 - Develop custom content or modifications
 
+## Working Directory
+
+**Important**: All path references in this repository are relative to the repository root (`xi-ai/`). When using this repository:
+- Ensure your working directory is the repository root
+- Path references like `/reference/src/map/` mean `xi-ai/reference/src/map/`
+- Path references like `/docs/database.md` mean `xi-ai/docs/database.md`
+
+The `/reference/` directory is created by running `./scripts/setup-reference.sh` from the repository root.
+
 ## Repository Structure
 
 ```

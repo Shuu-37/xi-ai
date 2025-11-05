@@ -10,15 +10,35 @@ The repository includes a `CLAUDE.md` file that provides comprehensive guidance 
 
 ## Setup
 
-### Set up LandSandBoat Reference
+### 1. Clone this repository
 
-To get the complete LandSandBoat reference codebase locally, run:
+```bash
+git clone https://github.com/Shuu-37/xi-ai.git
+cd xi-ai
+```
+
+**Important**: Always work from the `xi-ai` repository root directory. All path references in the documentation (like `/reference/src/map/` or `/docs/database.md`) are relative to this root directory.
+
+### 2. Set up LandSandBoat Reference
+
+From the repository root, run:
 
 ```bash
 ./scripts/setup-reference.sh
 ```
 
 This will clone the [LandSandBoat repository](https://github.com/LandSandBoat/server) into a `reference/` directory. This directory is gitignored and used by AI agents as a reference when working with the documentation.
+
+### 3. Using with Claude Code
+
+When using Claude Code, make sure to launch it from the repository root:
+
+```bash
+cd xi-ai
+claude
+```
+
+This ensures all path references in `CLAUDE.md` work correctly.
 
 ## Documentation
 
