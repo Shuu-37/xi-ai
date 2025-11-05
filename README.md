@@ -9,8 +9,6 @@ This repository provides structured documentation and reference materials to hel
 ## Repository Contents
 
 - **`/docs/`** - AI-friendly documentation covering architecture, database, gameplay systems, networking, and scripting
-- **`/research/`** - MMO API design research and implementation recommendations
-- **`/reference/`** - Complete LandSandBoat codebase clone for reference
 
 ## Quick Start
 
