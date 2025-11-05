@@ -246,30 +246,39 @@ socket.recv(reply, zmq::recv_flags::none);
 
 ### ⚠️ Recommendation for Tool Development
 
-**For most use cases, do NOT use this HTTP API. Instead:**
+**For tool development, do NOT use this HTTP API. Instead:**
 
-✅ **Preferred Approach**: Connect directly to the MariaDB database
-- Full access to all game data (124 tables)
-- No 60-second cache delay
-- More flexible queries
-- Better performance
-- See [Database Documentation](database.md) for details
+✅ **Recommended Approach**: Build your own TypeScript API
+- Create custom REST API with TypeScript (Express/Fastify/Hono)
+- Connect directly to MariaDB database
+- Use TanStack Query on frontend for data fetching/caching
+- Add authentication, authorization, rate limiting
+- Full control over endpoints and business logic
+- Type-safe end-to-end with TypeScript
 
-✅ **Alternative**: Build your own RESTful API
-- Wrap the database with your own API server
-- Add authentication, rate limiting, custom endpoints
-- Use any tech stack (Node.js, Python, Go, etc.)
-- Complete control over functionality
+**Architecture**:
+```
+Frontend (React + TanStack Query)
+    ↓ HTTP/REST
+Your TypeScript API (Express/Fastify)
+    ↓ SQL (mysql2 or Prisma)
+MariaDB (LandSandBoat Database)
+```
 
-❌ **This HTTP API is limited to**:
-- Basic server monitoring (session counts, zone populations)
+✅ **For Quick Scripts**: Direct database access
+- Simple admin scripts, one-off queries
+- No API overhead needed
+- See [Database Documentation](database.md) for connection examples
+
+❌ **Built-in HTTP API is limited to**:
+- Only 6 monitoring endpoints (sessions, IPs, zones, settings)
 - Read-only operations
-- No player/character management
-- No item management
+- No character/item management
 - No administrative actions
-- 60-second cache (stale data)
+- 60-second stale cache
+- No authentication
 
-**Use this HTTP API only for**: Simple monitoring dashboards or status displays where 60-second staleness is acceptable.
+**Use built-in HTTP API only for**: Basic server status monitoring where real-time data isn't required.
 
 ### Overview
 
@@ -718,55 +727,115 @@ Scripts can extend functionality without modifying C++ code:
 - Special events
 - Battle logic
 
-## Comparison: HTTP API vs Database Access
+## Comparison: Built-in HTTP API vs Custom API
 
-### Why Direct Database Access is Better
+### Why Build Your Own API
 
-| Feature | LSB HTTP API | Direct Database Access |
-|---------|--------------|------------------------|
-| **Data Freshness** | 60-second cache | Real-time |
-| **Available Endpoints** | 6 basic endpoints | 124 tables, unlimited queries |
+| Feature | LSB HTTP API | Custom TypeScript API |
+|---------|--------------|----------------------|
+| **Data Freshness** | 60-second cache | Real-time from database |
+| **Available Endpoints** | 6 basic endpoints | Unlimited custom endpoints |
 | **Character Management** | ❌ Not available | ✅ Full CRUD operations |
 | **Item Management** | ❌ Not available | ✅ Full inventory access |
-| **Custom Queries** | ❌ Fixed endpoints | ✅ Any SQL query |
-| **Performance** | Cache-dependent | Direct, optimized |
-| **Authentication** | ❌ None | ✅ Database user permissions |
-| **Availability** | Requires World Server running | Always available |
-| **Setup Complexity** | Requires ENABLE_HTTP setting | Just connection string |
+| **Custom Business Logic** | ❌ Fixed logic | ✅ Any logic you need |
+| **Authentication** | ❌ None | ✅ JWT, OAuth, API keys |
+| **Authorization** | ❌ None | ✅ Role-based access control |
+| **Validation** | ❌ None | ✅ Zod, Yup, custom validators |
+| **Type Safety** | ❌ None | ✅ End-to-end TypeScript |
+| **Rate Limiting** | ❌ None | ✅ Custom rate limits |
+| **Caching Strategy** | Fixed 60s | ✅ Custom (TanStack Query) |
+| **Error Handling** | Basic | ✅ Custom error responses |
+| **Setup Complexity** | Enable setting | Build API server |
 
 ### Example: Getting Character Information
 
-**❌ Using HTTP API** (not possible):
+**❌ Using Built-in HTTP API** (not possible):
 ```bash
-# HTTP API cannot get character info
+# Built-in HTTP API cannot get character info
 curl http://localhost:8088/api/characters/1
 # 404 - endpoint doesn't exist
 ```
 
-**✅ Using Direct Database Access**:
-```python
-import mariadb
+**✅ Using Your Own TypeScript API**:
 
-conn = mariadb.connect(
-    host="127.0.0.1",
-    user="xiserver",
-    password="xiserver",
-    database="xidb"
-)
+**Backend** (Express + mysql2):
+```typescript
+// api/routes/characters.ts
+import express from 'express';
+import { pool } from '../db';
 
-# Get full character details
-cursor = conn.cursor()
-cursor.execute("""
-    SELECT c.*, cs.*, cj.*, cp.*
+const router = express.Router();
+
+router.get('/characters/:id', async (req, res) => {
+  const { id } = req.params;
+
+  const [rows] = await pool.execute(`
+    SELECT
+      c.charid, c.charname, c.mjob, c.mlvl, c.nation,
+      cs.hp, cs.mp, cs.str, cs.dex, cs.vit, cs.agi, cs.int, cs.mnd, cs.chr,
+      cj.war, cj.mnk, cj.whm, cj.blm, cj.rdm, cj.thf,
+      cp.rank, cp.fame_sandoria, cp.fame_bastok, cp.fame_windurst
     FROM chars c
     JOIN char_stats cs ON c.charid = cs.charid
     JOIN char_jobs cj ON c.charid = cj.charid
     JOIN char_profile cp ON c.charid = cp.charid
     WHERE c.charid = ?
-""", (1,))
+  `, [id]);
 
-character = cursor.fetchone()
-# Full character data including stats, jobs, profile, etc.
+  if (rows.length === 0) {
+    return res.status(404).json({ error: 'Character not found' });
+  }
+
+  res.json(rows[0]);
+});
+
+export default router;
+```
+
+**Frontend** (React + TanStack Query):
+```typescript
+// hooks/useCharacter.ts
+import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
+
+interface Character {
+  charid: number;
+  charname: string;
+  mjob: number;
+  mlvl: number;
+  hp: number;
+  mp: number;
+  // ... other fields
+}
+
+export function useCharacter(id: number) {
+  return useQuery({
+    queryKey: ['character', id],
+    queryFn: async () => {
+      const { data } = await axios.get<Character>(
+        `http://localhost:3000/api/characters/${id}`
+      );
+      return data;
+    },
+    staleTime: 5000, // Cache for 5 seconds
+  });
+}
+
+// Usage in component
+function CharacterProfile({ characterId }: { characterId: number }) {
+  const { data: character, isLoading, error } = useCharacter(characterId);
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error loading character</div>;
+
+  return (
+    <div>
+      <h1>{character.charname}</h1>
+      <p>Level {character.mlvl} {character.mjob}</p>
+      <p>HP: {character.hp} / MP: {character.mp}</p>
+    </div>
+  );
+}
 ```
 
 ### When to Use Each Approach
