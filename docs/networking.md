@@ -246,25 +246,103 @@ socket.recv(reply, zmq::recv_flags::none);
 
 ### Overview
 
+**Process**: Runs in the World Server (`xi_world` executable)
 **Status**: Optional, disabled by default
 **Port**: 8088 (localhost only)
 **Protocol**: HTTP/1.1
 **Format**: JSON
+**Implementation**: `/src/world/http_server.cpp` (cpp-httplib library)
+**Thread**: Runs on separate async thread (non-blocking)
+
+### How It Works
+
+The HTTP API is part of the World Server process, not a standalone service:
+
+1. **Initialization**: When `xi_world` starts, it creates an `HTTPServer` instance
+2. **Conditional Start**: HTTP server only initializes if `network.ENABLE_HTTP = true`
+3. **Separate Thread**: HTTP server runs on a dedicated async thread to avoid blocking World Server operations
+4. **Data Caching**: Queries database on-demand, caches results for 60 seconds to reduce database load
+5. **Thread Safety**: Uses synchronized shared memory for thread-safe data access
+6. **Lifecycle**: Automatically starts with World Server, stops when World Server shuts down
+
+**Architecture Flow**:
+```
+xi_world (main thread)
+  ├─> WorldEngine
+  │     ├─> IPCServer (ZeroMQ)
+  │     ├─> PartySystem
+  │     ├─> ConquestSystem
+  │     └─> HTTPServer (async thread) ─> cpp-httplib listener
+  │                                          ├─> GET /api/*
+  │                                          └─> Queries MariaDB (60s cache)
+  └─> Other systems...
+```
+
+**Cache Behavior**:
+- First request triggers database query and populates cache
+- Subsequent requests within 60 seconds use cached data
+- After 60 seconds, next request refreshes cache from database
+- Thread-safe: Multiple simultaneous requests handled correctly
 
 ### Enabling HTTP API
 
 In `/settings/network.lua`:
 ```lua
-world_http_api_enabled = true
-world_http_api_port = 8088
+ENABLE_HTTP = true,  -- Set to true to enable
+HTTP_HOST   = 'localhost',
+HTTP_PORT   = 8088,
 ```
 
-**Security Warning**: HTTP API is disabled by default. Enable only on secure networks, localhost only.
+**Security Warning**:
+- HTTP API is disabled by default for security
+- Binds to localhost only (not accessible from network)
+- Enable only on secure networks
+- No authentication built-in (add reverse proxy if exposing publicly)
+
+### Prerequisites
+
+To use the HTTP API, you must:
+1. Have the **World Server** (`xi_world`) running
+2. Set `ENABLE_HTTP = true` in `/settings/network.lua`
+3. Ensure World Server can connect to the database
+
+**Important**: The HTTP API is **not available** from Login Server or Map Servers - only World Server.
+
+### Quick Start
+
+**1. Enable in settings** (`/settings/network.lua`):
+```lua
+ENABLE_HTTP = true,
+```
+
+**2. Restart World Server**:
+```bash
+# Stop and restart xi_world
+./xi_world
+```
+
+**3. Test the API**:
+```bash
+# Should return "Hello LSB API"
+curl http://localhost:8088/api
+
+# Get active sessions
+curl http://localhost:8088/api/sessions
+```
+
+**Expected Console Output** (when World Server starts):
+```
+[Info] Starting HTTP Server on http://localhost:8088/api
+```
+
+If you see this message, the HTTP API is running successfully.
 
 ### API Endpoints
 
 **Implementation**: `/src/world/http_server.cpp`
-**Data Cache**: Updates every 60 seconds
+**Library**: cpp-httplib (embedded HTTP server)
+**Data Source**: MariaDB via prepared statements
+**Cache TTL**: 60 seconds (automatic refresh on next request)
 
 #### GET /api
 Health check endpoint
