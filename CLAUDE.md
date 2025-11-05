@@ -12,33 +12,45 @@ This repository serves as an **AI-friendly knowledge base** for Final Fantasy XI
 - Interface with the server's various subsystems
 - Develop custom content or modifications
 
-## Working Directory
+## Using This Knowledge Base
 
-**Important**: All path references in this repository are relative to the repository root (`xi-ai/`). When using this repository:
-- Ensure your working directory is the repository root
-- Path references like `/reference/src/map/` mean `xi-ai/reference/src/map/`
-- Path references like `/docs/database.md` mean `xi-ai/docs/database.md`
+This repository is designed to be cloned into your project as a reference resource. It can be located anywhere in your project structure.
 
-The `/reference/` directory is created by running `./scripts/setup-reference.sh` from the repository root.
+**Path References**: All paths in this documentation use the pattern `xi-ai/path/to/file` to indicate they are relative to wherever you cloned the xi-ai repository. For example:
+- `xi-ai/docs/database.md` - The database documentation file
+- `xi-ai/reference/src/map/` - LandSandBoat map server source code
+- `xi-ai/scripts/setup-reference.sh` - Setup script
+
+**Setting Up**: After cloning xi-ai into your project, run the setup script from within the xi-ai directory:
+```bash
+cd path/to/your-project/xi-ai
+./scripts/setup-reference.sh
+```
+
+This creates `xi-ai/reference/` with the complete LandSandBoat codebase for reference.
 
 ## Repository Structure
 
 ```
-/docs/                         - AI-friendly documentation (164 KB)
-  architecture-overview.md     - Server components, processes, and system design
-  gameplay-systems.md          - Combat, quests, NPCs, zones, and game mechanics
-  database.md                  - Schema documentation, table relationships, data structures (56 KB)
-  utilities.md                 - Available utilities, scripts, and development tools
-  networking.md                - Network protocols, IPC, HTTP API, packet structures (28 KB)
-  scripting.md                 - Lua scripting guide, integration points, examples
+xi-ai/
+  docs/                        - AI-friendly documentation (164 KB)
+    architecture-overview.md   - Server components, processes, and system design
+    gameplay-systems.md        - Combat, quests, NPCs, zones, and game mechanics
+    database.md                - Schema documentation, table relationships, data structures (56 KB)
+    utilities.md               - Available utilities, scripts, and development tools
+    networking.md              - Network protocols, IPC, HTTP API, packet structures (28 KB)
+    scripting.md               - Lua scripting guide, integration points, examples
 
-/reference/                    - Full LandSandBoat codebase clone (gitignored, set up via scripts/setup-reference.sh)
-  src/                         - C++20 source code (common, map, world, login, search)
-  scripts/                     - Lua scripting layer (zones, globals, enums)
-  sql/                         - 126+ SQL schema files
-  tools/                       - Python development tools
-  settings/                    - Lua configuration files
-  documentation/               - LandSandBoat reference documentation
+  reference/                   - Full LandSandBoat codebase clone (gitignored, set up via scripts/setup-reference.sh)
+    src/                       - C++20 source code (common, map, world, login, search)
+    scripts/                   - Lua scripting layer (zones, globals, enums)
+    sql/                       - 126+ SQL schema files
+    tools/                     - Python development tools
+    settings/                  - Lua configuration files
+    documentation/             - LandSandBoat reference documentation
+
+  scripts/                     - Utility scripts
+    setup-reference.sh         - Clone/update LandSandBoat repository into reference/
 ```
 
 ## LandSandBoat Quick Reference
@@ -61,16 +73,16 @@ LandSandBoat is a multi-process server emulator:
 5. **Database** (port 3306): MariaDB for persistent data
 6. **IPC** (port 54003): ZeroMQ message queue for inter-process communication
 
-### Key Source Directories (in /reference/)
-- `/reference/src/common/` - Shared utilities, IPC, database access
-- `/reference/src/map/` - Core gameplay engine (151 files)
-  - `/reference/src/map/entities/` - Entity system (chars, mobs, NPCs, pets, trusts)
-  - `/reference/src/map/ai/` - AI controllers and state machines
-  - `/reference/src/map/packets/` - Network protocol (c2s and s2c)
-- `/reference/scripts/` - Lua scripting layer
-  - `/reference/scripts/zones/` - 297 zone directories with NPCs, mobs, quests
-  - `/reference/scripts/globals/` - 127 shared functionality files
-  - `/reference/scripts/enum/` - 110 enumeration files (game constants)
+### Key Source Directories (in xi-ai/reference/)
+- `xi-ai/reference/src/common/` - Shared utilities, IPC, database access
+- `xi-ai/reference/src/map/` - Core gameplay engine (151 files)
+  - `xi-ai/reference/src/map/entities/` - Entity system (chars, mobs, NPCs, pets, trusts)
+  - `xi-ai/reference/src/map/ai/` - AI controllers and state machines
+  - `xi-ai/reference/src/map/packets/` - Network protocol (c2s and s2c)
+- `xi-ai/reference/scripts/` - Lua scripting layer
+  - `xi-ai/reference/scripts/zones/` - 297 zone directories with NPCs, mobs, quests
+  - `xi-ai/reference/scripts/globals/` - 127 shared functionality files
+  - `xi-ai/reference/scripts/enum/` - 110 enumeration files (game constants)
 
 ### Database Schema
 126 SQL files organized by system:
@@ -80,14 +92,14 @@ LandSandBoat is a multi-process server emulator:
 - Content: Fishing, crafting, BCNM, instances, status effects
 
 ### Configuration System
-All configuration uses Lua format (`/reference/settings/default/`):
+All configuration uses Lua format (in `xi-ai/reference/settings/default/`):
 - `main.lua` - Core server settings (expansions, rates, content toggles)
 - `network.lua` - Network ports, database connection, DDoS protection
 - `map.lua` - Map server configuration
 - `login.lua` - Authentication settings
 
 ### Python Tools
-Located in `/reference/tools/`:
+Located in `xi-ai/reference/tools/`:
 - `dbtool.py` - Database management, backups, migrations
 - `announce.py` - Broadcast messages to all online players
 - `price_checker.py` - Validate NPC/guild shop pricing
@@ -100,27 +112,27 @@ Located in `/reference/tools/`:
 
 When building integrations or tools:
 
-1. **Database Access**: Connect to MariaDB (default port 3306), credentials in `/reference/settings/network.lua`
-2. **HTTP API**: Optional World Server HTTP API on localhost:8088 (disabled by default, see `/docs/networking.md`)
-3. **IPC Integration**: ZeroMQ on port 54003 (localhost only), use IPC structures from `/reference/src/common/ipc.h`
-4. **Lua Scripting**: Place custom scripts in `/reference/scripts/` directory, use existing patterns from `/reference/scripts/globals/`
-5. **Module System**: Create modules in `/reference/modules/custom/` for extending functionality
+1. **Database Access**: Connect to MariaDB (default port 3306), credentials in `xi-ai/reference/settings/network.lua`
+2. **HTTP API**: Optional World Server HTTP API on localhost:8088 (disabled by default, see `xi-ai/docs/networking.md`)
+3. **IPC Integration**: ZeroMQ on port 54003 (localhost only), use IPC structures from `xi-ai/reference/src/common/ipc.h`
+4. **Lua Scripting**: Place custom scripts in `xi-ai/reference/scripts/` directory, use existing patterns from `xi-ai/reference/scripts/globals/`
+5. **Module System**: Create modules in `xi-ai/reference/modules/custom/` for extending functionality
 
 ### Working with Game Data
 
-- **Zone Information**: `/reference/documentation/ZoneIDs.txt` - Zone ID reference
-- **Item Data**: Query `item_equipment`, `item_armor`, `item_weapon` tables (see `/docs/database.md`)
-- **Mob Data**: Query `mob_spawn_points`, `mob_droplist`, `mob_resistances` (see `/docs/database.md`)
-- **Quest/Mission Status**: See `/reference/documentation/CoP MissionStatus.md`
-- **Database Schema**: Complete reference in `/docs/database.md` (56 KB)
+- **Zone Information**: `xi-ai/reference/documentation/ZoneIDs.txt` - Zone ID reference
+- **Item Data**: Query `item_equipment`, `item_armor`, `item_weapon` tables (see `xi-ai/docs/database.md`)
+- **Mob Data**: Query `mob_spawn_points`, `mob_droplist`, `mob_resistances` (see `xi-ai/docs/database.md`)
+- **Quest/Mission Status**: See `xi-ai/reference/documentation/CoP MissionStatus.md`
+- **Database Schema**: Complete reference in `xi-ai/docs/database.md` (56 KB)
 
 ### Understanding Game Mechanics
 
-- **Combat System**: Implemented in `/reference/src/map/` (C++) with formulas in `/reference/scripts/globals/` (Lua)
-- **Status Effects**: `/reference/src/map/status_effect_container.cpp` (C++) and `/reference/scripts/effects/` (Lua)
-- **Entity Management**: Entity base classes in `/reference/src/map/entities/`
-- **AI Behavior**: Controllers and states in `/reference/src/map/ai/`
-- **Gameplay Documentation**: See `/docs/gameplay-systems.md` for comprehensive coverage
+- **Combat System**: Implemented in `xi-ai/reference/src/map/` (C++) with formulas in `xi-ai/reference/scripts/globals/` (Lua)
+- **Status Effects**: `xi-ai/reference/src/map/status_effect_container.cpp` (C++) and `xi-ai/reference/scripts/effects/` (Lua)
+- **Entity Management**: Entity base classes in `xi-ai/reference/src/map/entities/`
+- **AI Behavior**: Controllers and states in `xi-ai/reference/src/map/ai/`
+- **Gameplay Documentation**: See `xi-ai/docs/gameplay-systems.md` for comprehensive coverage
 
 ## Building GM Tools or APIs
 
@@ -141,10 +153,10 @@ When building integrations or tools:
 
 ### Network Protocol Considerations
 
-- FFXI uses custom binary protocol, packet definitions in `/reference/src/map/packets/`
+- FFXI uses custom binary protocol, packet definitions in `xi-ai/reference/src/map/packets/`
 - Modifying packets requires understanding client expectations
 - For server-to-server communication, prefer ZeroMQ IPC
-- For external tools, use database access or HTTP API (see `/docs/networking.md`)
+- For external tools, use database access or HTTP API (see `xi-ai/docs/networking.md`)
 - **Recommended approach**: TypeScript + TanStack Query for modern API development
 
 ## Important Considerations
@@ -158,16 +170,16 @@ When building integrations or tools:
 
 ### Game Balance
 
-- Server rates and multipliers configured in `/reference/settings/default/main.lua`
+- Server rates and multipliers configured in `xi-ai/reference/settings/default/main.lua`
 - Custom modifications should respect era-specific settings
 - Module system allows customization without core changes
 
 ### Security
 
-- Database credentials in `/reference/settings/default/network.lua`
+- Database credentials in `xi-ai/reference/settings/default/network.lua`
 - DDoS protection settings in network configuration
 - IPC bound to localhost only
-- HTTP API disabled by default for security (see `/docs/networking.md`)
+- HTTP API disabled by default for security (see `xi-ai/docs/networking.md`)
 
 ### Performance
 
@@ -186,7 +198,7 @@ When building integrations or tools:
 ## Working in This Repository
 
 ### Documentation Structure
-This repository uses a **flat-file documentation structure** under `/docs/` for easy navigation:
+This repository uses a **flat-file documentation structure** under `xi-ai/docs/` for easy navigation:
 - `architecture-overview.md` - Server architecture and processes
 - `gameplay-systems.md` - Combat, quests, NPCs, zones
 - `database.md` - Complete schema reference (largest file)
@@ -195,8 +207,8 @@ This repository uses a **flat-file documentation structure** under `/docs/` for 
 - `scripting.md` - Lua scripting guide
 
 ### Reference Directory
-The `/reference/` directory contains the complete LandSandBoat codebase and is **gitignored**:
-- Set up locally by running `./scripts/setup-reference.sh`
+The `xi-ai/reference/` directory contains the complete LandSandBoat codebase and is **gitignored**:
+- Set up locally by running `./scripts/setup-reference.sh` from within the xi-ai directory
 - Contains full C++20 source code
 - All 297 zone scripts
 - Complete SQL schema
@@ -209,8 +221,8 @@ This directory serves as a reference for AI agents to examine actual LandSandBoa
 
 When adding or updating documentation:
 
-1. **File Organization**: Add new documentation to `/docs/` as flat markdown files
+1. **File Organization**: Add new documentation to `xi-ai/docs/` as flat markdown files
 2. **Formatting**: Use clear markdown with code blocks and examples
-3. **Path References**: Reference files with line numbers (e.g., `/reference/src/map/zone.cpp:142`)
+3. **Path References**: Use the pattern `xi-ai/path/to/file` (e.g., `xi-ai/reference/src/map/zone.cpp:142`)
 4. **Focus**: Keep content focused on building tools and integrations
 5. **Updates**: Update this CLAUDE.md when structure or major content changes occur

@@ -10,39 +10,36 @@ The repository includes a `CLAUDE.md` file that provides comprehensive guidance 
 
 ## Setup
 
-### 1. Clone this repository
+### 1. Clone into your project
+
+Clone this repository anywhere in your project structure:
 
 ```bash
+# Example: Clone into your FFXI project
+cd /path/to/your-ffxi-project
 git clone https://github.com/Shuu-37/xi-ai.git
-cd xi-ai
 ```
 
-**Important**: Always work from the `xi-ai` repository root directory. All path references in the documentation (like `/reference/src/map/` or `/docs/database.md`) are relative to this root directory.
+The `xi-ai` repository can live alongside your other project directories (server, tools, website, etc.).
 
 ### 2. Set up LandSandBoat Reference
 
-From the repository root, run:
-
-```bash
-./scripts/setup-reference.sh
-```
-
-This will clone the [LandSandBoat repository](https://github.com/LandSandBoat/server) into a `reference/` directory. This directory is gitignored and used by AI agents as a reference when working with the documentation.
-
-### 3. Using with Claude Code
-
-When using Claude Code, make sure to launch it from the repository root:
+From within the `xi-ai` directory, run the setup script:
 
 ```bash
 cd xi-ai
-claude
+./scripts/setup-reference.sh
 ```
 
-This ensures all path references in `CLAUDE.md` work correctly.
+This clones the [LandSandBoat repository](https://github.com/LandSandBoat/server) into `xi-ai/reference/` for AI agents to reference.
+
+### 3. Using with AI Agents
+
+All path references in the documentation use the pattern `xi-ai/path/to/file`, making them work regardless of where you cloned the repository. AI agents like Claude can reference files using these paths from anywhere in your project.
 
 ## Documentation
 
-The `/docs/` directory contains comprehensive AI-friendly documentation:
+The `xi-ai/docs/` directory contains comprehensive AI-friendly documentation:
 
 - **`architecture-overview.md`** - Server components, multi-process architecture, and system design
 - **`database.md`** - Complete database schema, table relationships, and data structures
