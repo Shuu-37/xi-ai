@@ -8,6 +8,18 @@ This repository provides structured documentation and reference materials to hel
 
 ## Setup
 
+### 1. Initialize Claude Code
+
+If you're using Claude Code, initialize the project:
+
+```bash
+claude code
+```
+
+Then run the `/init` command to set up your local Claude Code configuration.
+
+### 2. Set up LandSandBoat Reference
+
 To get the complete LandSandBoat reference codebase locally, run:
 
 ```bash
