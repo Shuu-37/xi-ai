@@ -15,13 +15,28 @@ This repository serves as an **AI-friendly knowledge base** for Final Fantasy XI
 ## Repository Structure
 
 ```
-/docs/
-  /architecture/     - Server components, processes, and system design
-  /gameplay/         - Combat, quests, NPCs, zones, and game mechanics
-  /database/         - Schema documentation, table relationships, data structures
-  /tools/            - Available utilities, scripts, and development tools
-  /api/              - Network protocols, IPC, HTTP API, packet structures
-  /scripting/        - Lua scripting guide, integration points, examples
+/docs/                         - AI-friendly documentation (164 KB)
+  architecture-overview.md     - Server components, processes, and system design
+  gameplay-systems.md          - Combat, quests, NPCs, zones, and game mechanics
+  database.md                  - Schema documentation, table relationships, data structures (56 KB)
+  utilities.md                 - Available utilities, scripts, and development tools
+  networking.md                - Network protocols, IPC, HTTP API, packet structures (28 KB)
+  scripting.md                 - Lua scripting guide, integration points, examples
+
+/research/                     - MMO API design research (108 KB)
+  api-comparison-matrix.md     - Side-by-side comparison of major MMO APIs
+  case-study-eve-online-esi.md - EVE Online ESI API analysis
+  case-study-guild-wars-2.md   - Guild Wars 2 API analysis
+  api-design-recommendations.md - Implementation guide for LandSandBoat API
+  mmo-api-design-overview.md   - Executive summary of API research
+
+/reference/                    - Full LandSandBoat codebase clone (772 MB)
+  src/                         - C++20 source code (common, map, world, login, search)
+  scripts/                     - Lua scripting layer (zones, globals, enums)
+  sql/                         - 126+ SQL schema files
+  tools/                       - Python development tools
+  settings/                    - Lua configuration files
+  documentation/               - LandSandBoat reference documentation
 ```
 
 ## LandSandBoat Quick Reference
@@ -44,16 +59,16 @@ LandSandBoat is a multi-process server emulator:
 5. **Database** (port 3306): MariaDB for persistent data
 6. **IPC** (port 54003): ZeroMQ message queue for inter-process communication
 
-### Key Source Directories
-- `/src/common/` - Shared utilities, IPC, database access
-- `/src/map/` - Core gameplay engine (151 files)
-  - `/src/map/entities/` - Entity system (chars, mobs, NPCs, pets, trusts)
-  - `/src/map/ai/` - AI controllers and state machines
-  - `/src/map/packets/` - Network protocol (c2s and s2c)
-- `/scripts/` - Lua scripting layer
-  - `/scripts/zones/` - 297 zone directories with NPCs, mobs, quests
-  - `/scripts/globals/` - 127 shared functionality files
-  - `/scripts/enum/` - 110 enumeration files (game constants)
+### Key Source Directories (in /reference/)
+- `/reference/src/common/` - Shared utilities, IPC, database access
+- `/reference/src/map/` - Core gameplay engine (151 files)
+  - `/reference/src/map/entities/` - Entity system (chars, mobs, NPCs, pets, trusts)
+  - `/reference/src/map/ai/` - AI controllers and state machines
+  - `/reference/src/map/packets/` - Network protocol (c2s and s2c)
+- `/reference/scripts/` - Lua scripting layer
+  - `/reference/scripts/zones/` - 297 zone directories with NPCs, mobs, quests
+  - `/reference/scripts/globals/` - 127 shared functionality files
+  - `/reference/scripts/enum/` - 110 enumeration files (game constants)
 
 ### Database Schema
 126 SQL files organized by system:
@@ -63,17 +78,19 @@ LandSandBoat is a multi-process server emulator:
 - Content: Fishing, crafting, BCNM, instances, status effects
 
 ### Configuration System
-All configuration uses Lua format (`/settings/default/`):
+All configuration uses Lua format (`/reference/settings/default/`):
 - `main.lua` - Core server settings (expansions, rates, content toggles)
 - `network.lua` - Network ports, database connection, DDoS protection
 - `map.lua` - Map server configuration
 - `login.lua` - Authentication settings
 
 ### Python Tools
-Located in `/tools/`:
+Located in `/reference/tools/`:
 - `dbtool.py` - Database management, backups, migrations
 - `announce.py` - Broadcast messages to all online players
 - `price_checker.py` - Validate NPC/guild shop pricing
+- `give_items.py` - Item distribution to characters
+- Plus 20+ additional development and CI tools
 
 ## Common Development Tasks
 
@@ -81,25 +98,28 @@ Located in `/tools/`:
 
 When building integrations or tools:
 
-1. **Database Access**: Connect to MariaDB (default port 3306), credentials in `settings/network.lua`
-2. **HTTP API**: Optional World Server HTTP API on localhost:8088 (disabled by default)
-3. **IPC Integration**: ZeroMQ on port 54003 (localhost only), use IPC structures from `src/common/ipc.h`
-4. **Lua Scripting**: Place custom scripts in `/scripts/` directory, use existing patterns from `/scripts/globals/`
-5. **Module System**: Create modules in `/modules/custom/` for extending functionality
+1. **Database Access**: Connect to MariaDB (default port 3306), credentials in `/reference/settings/network.lua`
+2. **HTTP API**: Optional World Server HTTP API on localhost:8088 (disabled by default, see `/docs/networking.md`)
+3. **IPC Integration**: ZeroMQ on port 54003 (localhost only), use IPC structures from `/reference/src/common/ipc.h`
+4. **Lua Scripting**: Place custom scripts in `/reference/scripts/` directory, use existing patterns from `/reference/scripts/globals/`
+5. **Module System**: Create modules in `/reference/modules/custom/` for extending functionality
+6. **API Design**: See `/research/api-design-recommendations.md` for modern API implementation guidance
 
 ### Working with Game Data
 
-- **Zone Information**: `/documentation/zone_ids.txt` - Zone ID reference
-- **Item Data**: Query `item_equipment`, `item_armor`, `item_weapon` tables
-- **Mob Data**: Query `mob_spawn_points`, `mob_droplist`, `mob_resistances`
-- **Quest/Mission Status**: See `/documentation/mission_status.txt`
+- **Zone Information**: `/reference/documentation/ZoneIDs.txt` - Zone ID reference
+- **Item Data**: Query `item_equipment`, `item_armor`, `item_weapon` tables (see `/docs/database.md`)
+- **Mob Data**: Query `mob_spawn_points`, `mob_droplist`, `mob_resistances` (see `/docs/database.md`)
+- **Quest/Mission Status**: See `/reference/documentation/CoP MissionStatus.md`
+- **Database Schema**: Complete reference in `/docs/database.md` (56 KB)
 
 ### Understanding Game Mechanics
 
-- **Combat System**: Implemented in `/src/map/` (C++) with formulas in `/scripts/globals/` (Lua)
-- **Status Effects**: `status_effect_container.cpp` (C++) and `/scripts/effects/` (Lua)
-- **Entity Management**: Entity base classes in `/src/map/entities/`
-- **AI Behavior**: Controllers and states in `/src/map/ai/`
+- **Combat System**: Implemented in `/reference/src/map/` (C++) with formulas in `/reference/scripts/globals/` (Lua)
+- **Status Effects**: `/reference/src/map/status_effect_container.cpp` (C++) and `/reference/scripts/effects/` (Lua)
+- **Entity Management**: Entity base classes in `/reference/src/map/entities/`
+- **AI Behavior**: Controllers and states in `/reference/src/map/ai/`
+- **Gameplay Documentation**: See `/docs/gameplay-systems.md` for comprehensive coverage
 
 ## Building GM Tools or APIs
 
@@ -120,10 +140,11 @@ When building integrations or tools:
 
 ### Network Protocol Considerations
 
-- FFXI uses custom binary protocol, packet definitions in `/src/map/packets/`
+- FFXI uses custom binary protocol, packet definitions in `/reference/src/map/packets/`
 - Modifying packets requires understanding client expectations
 - For server-to-server communication, prefer ZeroMQ IPC
-- For external tools, use database access or HTTP API
+- For external tools, use database access or HTTP API (see `/docs/networking.md`)
+- **Recommended approach**: TypeScript + TanStack Query for modern API development
 
 ## Important Considerations
 
@@ -136,16 +157,16 @@ When building integrations or tools:
 
 ### Game Balance
 
-- Server rates and multipliers configured in `main.lua`
+- Server rates and multipliers configured in `/reference/settings/default/main.lua`
 - Custom modifications should respect era-specific settings
 - Module system allows customization without core changes
 
 ### Security
 
-- Database credentials in `settings/network.lua`
+- Database credentials in `/reference/settings/default/network.lua`
 - DDoS protection settings in network configuration
 - IPC bound to localhost only
-- HTTP API disabled by default for security
+- HTTP API disabled by default for security (see `/docs/networking.md`)
 
 ### Performance
 
@@ -163,11 +184,37 @@ When building integrations or tools:
 
 ## Working in This Repository
 
-When adding documentation to this repository:
+### Documentation Structure
+This repository uses a **flat-file documentation structure** under `/docs/` for easy navigation:
+- `architecture-overview.md` - Server architecture and processes
+- `gameplay-systems.md` - Combat, quests, NPCs, zones
+- `database.md` - Complete schema reference (largest file)
+- `utilities.md` - Python tools and development utilities
+- `networking.md` - API, IPC, and networking protocols
+- `scripting.md` - Lua scripting guide
 
-1. Maintain the directory structure under `/docs/`
-2. Use clear markdown formatting
-3. Include code examples where applicable
-4. Reference specific file paths with line numbers when relevant (e.g., `src/map/zone.cpp:142`)
-5. Keep documentation focused on information useful for building tools and integrations
-6. Update this CLAUDE.md if major structural changes occur
+### Research Directory
+The `/research/` directory contains MMO API design research:
+- Case studies from major MMOs (EVE Online, Guild Wars 2, WoW)
+- API comparison matrices
+- Implementation recommendations for LandSandBoat
+- 8-12 week roadmap for API development
+
+### Reference Directory
+The `/reference/` directory contains the complete LandSandBoat codebase (772 MB):
+- Full C++20 source code
+- All 297 zone scripts
+- Complete SQL schema
+- Python development tools
+- Configuration files and documentation
+
+### Contributing Guidelines
+
+When adding or updating documentation:
+
+1. **File Organization**: Add new documentation to `/docs/` as flat markdown files
+2. **Formatting**: Use clear markdown with code blocks and examples
+3. **Path References**: Reference files with line numbers (e.g., `/reference/src/map/zone.cpp:142`)
+4. **Focus**: Keep content focused on building tools and integrations
+5. **Research**: Add API/design research to `/research/`
+6. **Updates**: Update this CLAUDE.md when structure or major content changes occur
